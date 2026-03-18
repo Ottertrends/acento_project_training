@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import subprocess
+import shutil
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
@@ -10,11 +11,54 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_LEFT
 
-SOFFICE_EXE = r"C:\Program Files\LibreOffice\program\soffice.exe"
-PDFTOPPM_EXE = r"C:\Users\ferna\Tools\poppler-win\poppler-25.12.0\Library\bin\pdftoppm.exe"
+
+def find_exe(exe_name, candidates):
+  # Allow overrides so other computers don't need code edits.
+  override = os.environ.get(exe_name.upper())
+  if override and os.path.exists(override):
+    return override
+
+  which = shutil.which(exe_name)
+  if which:
+    return which
+
+  for c in candidates:
+    if os.path.exists(c):
+      return c
+
+  return None
+
+
+SOFFICE_EXE = find_exe(
+  "soffice",
+  [
+    r"C:\Program Files\LibreOffice\program\soffice.exe",
+    r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+  ],
+)
+
+PDFTOPPM_EXE = find_exe(
+  "pdftoppm",
+  [
+    # scoop-based poppler (common)
+    rf"C:\Users\{os.environ.get('USERNAME','')}\scoop\apps\poppler\current\Library\bin\pdftoppm.exe",
+    # our previous local path (harmless if missing)
+    r"C:\Users\ferna\Tools\poppler-win\poppler-25.12.0\Library\bin\pdftoppm.exe",
+    r"C:\Program Files\poppler\Library\bin\pdftoppm.exe",
+  ],
+)
 
 
 def pptx_to_images(pptx_path, tmp_dir):
+  if not SOFFICE_EXE:
+    raise FileNotFoundError(
+      "LibreOffice soffice.exe not found. Install LibreOffice or set env var SOFFICE_EXE to the full path."
+    )
+  if not PDFTOPPM_EXE:
+    raise FileNotFoundError(
+      "Poppler pdftoppm.exe not found. Install Poppler or set env var PDFTOPPM_EXE to the full path."
+    )
+
   # Remove any stale PDFs from a previous run so we always find the right file.
   for old in os.listdir(tmp_dir):
     if old.endswith(".pdf"):

@@ -1,0 +1,1 @@
+node scripts/generate-local.mjs AP-02 AP-02.txt

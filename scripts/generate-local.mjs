@@ -982,7 +982,7 @@ function buildSummaryHtml(data) {
 // ── Main pipeline ──────────────────────────────────────────────────────────
 async function generatePdfs(courseId, userPrompt) {
   const projectRoot = path.resolve(process.cwd());
-  const mainPromptPath = path.join(projectRoot, "..", "Main Prompt.txt");
+  const mainPromptPath = path.join(projectRoot, "Main Prompt.txt");
   const mainPromptText = await readFileSafe(mainPromptPath);
 
   if (!mainPromptText) {
